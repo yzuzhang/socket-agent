@@ -40,7 +40,7 @@ public class SocketClient {
 	private Socket socket = null;
     private int port = Constants.SOCKET_PORT; //服务端端口
     public static final String READ_TIMED_OUT = "Read timed out";	
-    
+
     public SocketClient() {
 		super();
 	}
@@ -57,7 +57,7 @@ public class SocketClient {
     /** 
      * 创建socket连接 
      */
-    public void CreateConnection(){   
+    protected void CreateConnection(){   
         try {
             socket = SocketFactory.getDefault().createSocket();
             SocketAddress socketAddress = new InetSocketAddress(ip, port);
@@ -324,4 +324,10 @@ public class SocketClient {
         }  
     }
 
+    public static void main(String[] args) {
+		SocketClient client = new SocketClient("127.0.0.1");
+		System.out.println("执行语句: java -version");
+		String msg = client.executeShell("java -version");
+		System.out.println(msg);
+	}
 }

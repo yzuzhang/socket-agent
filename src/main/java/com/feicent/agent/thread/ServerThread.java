@@ -14,10 +14,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import org.slf4j.Logger;
+
 import com.feicent.agent.SocketApplication;
 import com.feicent.agent.entity.AgentEntity;
 import com.feicent.agent.util.CloseUtil;
 import com.feicent.agent.util.Constants;
+import com.feicent.agent.util.MyUtil;
 
 /**
  * 负责处理socket请求
@@ -95,6 +97,7 @@ public class ServerThread implements Runnable {
 			out = new PrintWriter(client.getOutputStream(), true);
 
 			String[] cmd = new String[]{"/bin/sh", "-c", shell};
+			cmd = MyUtil.buildShell(shell);
 			builder = new ProcessBuilder(cmd);
 			builder.redirectErrorStream(true);
 			pos = builder.start();

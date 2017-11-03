@@ -54,5 +54,12 @@ public class AgentEntity implements Serializable {
 	public void setFilePathRemote(String filePathRemote) {
 		this.filePathRemote = filePathRemote;
 	}
+
+	@Override
+	public String toString() {
+		return "AgentEntity [shell=" + shell + ", filePath=" + filePath
+				+ ", serverIp=" + serverIp + ", filePathRemote="
+				+ filePathRemote + ", type=" + type + "]";
+	}
 	
 }

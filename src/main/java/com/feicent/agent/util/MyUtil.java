@@ -75,6 +75,21 @@ public class MyUtil {
 	public static String getUserDir() {
 		return System.getProperty("user.dir") + System.getProperty("file.separator");
 	}
+
+	public static String[] buildShell(String command) {
+		if (command == null) throw new NullPointerException();
+		String[] cmdarray;
+		String os = System.getProperty("os.name");
+		if (os.equals("Windows 95") || os.equals("Windows 98") || os.equals("Windows ME")){
+			cmdarray = new String[]{"command.exe", "/C", command};
+		} else if (os.startsWith("Windows")){
+			cmdarray = new String[]{"cmd.exe", "/C", command};
+		} else {
+			cmdarray = new String[]{"/bin/sh", "-c", command};
+		}
+		
+		return cmdarray;
+	}
 	
 	/**
 	 * 资源配置文件目录
