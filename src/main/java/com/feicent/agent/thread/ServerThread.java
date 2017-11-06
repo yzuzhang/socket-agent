@@ -102,6 +102,10 @@ public class ServerThread implements Runnable {
 			builder.redirectErrorStream(true);
 			pos = builder.start();
 
+			/* 为错误输出流单独开一个线程读取,否则会造成标准输出流的阻塞 */  
+            //Thread thread = new Thread(new ErrorRunnable(pos.getErrorStream(), out));  
+            //thread.start();
+            
 			input = new LineNumberReader(new InputStreamReader(pos.getInputStream()));
 			String line = null;
 			while ((line=input.readLine()) != null) {
