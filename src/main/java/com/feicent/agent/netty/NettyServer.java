@@ -78,6 +78,7 @@ public class NettyServer {
 				@Override
 				public void initChannel(SocketChannel ch) throws Exception {
 					ChannelPipeline pipeline = ch.pipeline();
+					//TCP粘包/拆包: http://www.cnblogs.com/Joanna-Yan/p/7814644.html
 					pipeline.addLast("frameDecoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
 					pipeline.addLast("frameEncoder", new LengthFieldPrepender(4));
 					pipeline.addLast("decoder", new StringDecoder(CharsetUtil.UTF_8));
