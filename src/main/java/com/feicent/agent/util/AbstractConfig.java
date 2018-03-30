@@ -42,7 +42,7 @@ public class AbstractConfig {
 	{
 		String value = p.getProperty(key);
 		if (value == null) {
-			logger.warn("'" + key + "' not fount!");
+			//logger.warn("'" + key + "' not fount!");
 		}
 		return value;
 	}

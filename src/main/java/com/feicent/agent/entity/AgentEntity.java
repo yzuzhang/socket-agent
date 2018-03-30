@@ -5,29 +5,28 @@ import java.io.Serializable;
 import com.feicent.agent.util.Constants;
 
 public class AgentEntity implements Serializable {
-	private static final long serialVersionUID = -2151324266631515148L;
+
+	private static final long serialVersionUID = 1L;
+	private String  shell;     //命令行
+	private String  clientFile;//客户端文件
+	private String  serverIp;  //服务器ip地址
+	private String  serverFile;//服务端文件地址
+	private Integer type = Constants.TYPE_DEFAULT;
 	
-	private String shell;//命令行
-	private String filePath;//客户端文件
-	private String serverIp;//服务器ip地址
-	private String filePathRemote;//服务端文件地址
-	private int    type = Constants.TYPE_DEFAULT;
-	
-	public AgentEntity(int type) {
+	public AgentEntity(Integer type) {
 		super();
 		this.type = type;
 	}
-	
-	public AgentEntity(int type, String shell) {
+	public AgentEntity(Integer type, String shell) {
 		super();
 		this.type = type;
 		this.shell = shell;
 	}
-	
-	public int getType() {
+
+	public Integer getType() {
 		return type;
 	}
-	public void setType(int type) {
+	public void setType(Integer type) {
 		this.type = type;
 	}
 	public String getShell() {
@@ -36,11 +35,11 @@ public class AgentEntity implements Serializable {
 	public void setShell(String shell) {
 		this.shell = shell;
 	}
-	public String getFilePath() {
-		return filePath;
+	public String getClientFile() {
+		return clientFile;
 	}
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
+	public void setClientFile(String clientFile) {
+		this.clientFile = clientFile;
 	}
 	public String getServerIp() {
 		return serverIp;
@@ -48,18 +47,18 @@ public class AgentEntity implements Serializable {
 	public void setServerIp(String serverIp) {
 		this.serverIp = serverIp;
 	}
-	public String getFilePathRemote() {
-		return filePathRemote;
+	public String getServerFile() {
+		return serverFile;
 	}
-	public void setFilePathRemote(String filePathRemote) {
-		this.filePathRemote = filePathRemote;
+	public void setServerFile(String serverFile) {
+		this.serverFile = serverFile;
 	}
 
 	@Override
 	public String toString() {
-		return "AgentEntity [shell=" + shell + ", filePath=" + filePath
-				+ ", serverIp=" + serverIp + ", filePathRemote="
-				+ filePathRemote + ", type=" + type + "]";
+		return "AgentEntity [shell=" + shell + ", clientFile=" + clientFile
+				+ ", serverIp=" + serverIp + ", serverFile="
+				+ serverFile + ", type=" + type + "]";
 	}
 	
 }

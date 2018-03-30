@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.feicent.agent.thread.ServerThread;
 import com.feicent.agent.util.CloseUtil;
 import com.feicent.agent.util.Constants;
+import com.feicent.agent.util.MyUtil;
 
 /**
  * 代理服务器启动类
@@ -28,7 +29,7 @@ public class SocketApplication {
 		try {
 			threadPool = Executors.newCachedThreadPool();
         	server = new ServerSocket(Constants.SOCKET_PORT); 
-        	logger.info("Creates a server socket success!");
+        	logger.info(MyUtil.getNow()+" creates a server socket success!");
         	
             while (true) {
                 Socket socket = server.accept();

@@ -70,17 +70,20 @@ public class MyUtil {
 	
 	/**
 	 * 用户的当前工作目录路径
-	 * D:/eclipse/workspaces\socket-agent\
+	 * D:\eclipse\workspaces\socket-agent\
 	 */
 	public static String getUserDir() {
 		return System.getProperty("user.dir") + System.getProperty("file.separator");
 	}
 
 	public static String[] buildShell(String command) {
-		if (command == null) throw new NullPointerException();
+		if (isEmpty(command)) {
+			throw new NullPointerException();
+		}
 		String[] cmdarray;
 		String os = System.getProperty("os.name");
-		if (os.equals("Windows 95") || os.equals("Windows 98") || os.equals("Windows ME")){
+
+		if ("Windows 95".equals(os) || "Windows 98".equals(os) || "Windows ME".equals(os)){
 			cmdarray = new String[]{"command.exe", "/C", command};
 		} else if (os.startsWith("Windows")){
 			cmdarray = new String[]{"cmd.exe", "/C", command};

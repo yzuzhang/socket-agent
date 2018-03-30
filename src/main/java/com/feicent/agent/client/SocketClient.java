@@ -35,20 +35,21 @@ import com.feicent.agent.util.MyUtil;
 public class SocketClient {
 	Logger logger = LoggerFactory.getLogger(SocketClient.class);
 	
-	int delaytime = 120 * 1000;
+	public static final int BUFFER_SIZE = 4 * 1024;
+	public static final int SO_TIMED_OUT = Constants.TIME_OUT;
+	public static final String separator = File.separator;
+	public static final String READ_TIMED_OUT = "Read timed out";
+	
 	private String ip;//服务端地址
 	private Socket socket = null;
     private int port = Constants.SOCKET_PORT; //服务端端口
-    public static final String READ_TIMED_OUT = "Read timed out";	
 
     public SocketClient() {
 		super();
 	}
-
 	public SocketClient(String ip) {
 		this.ip = ip;
 	} 
-    
 	public SocketClient(String ip, int port) {
 		this.ip = ip;  
         this.port = port;
@@ -65,7 +66,7 @@ public class SocketClient {
             socket.connect(socketAddress, 300);
             socket.setTcpNoDelay(true);
             socket.setKeepAlive(true);
-            socket.setSoTimeout(delaytime);
+            socket.setSoTimeout(SO_TIMED_OUT);
         } catch (Exception e) { 
             throw new RuntimeException("【"+ip+"】的socket连接异常:"+e.getMessage());
         }
@@ -179,23 +180,25 @@ public class SocketClient {
     	try {
     		CreateConnection();
             if(!file.exists()){
-            	throw new RuntimeException("文件不存在"+ localFile);
+            	throw new RuntimeException("文件不存在:"+ localFile);
             }
     		if(MyUtil.isEmpty(remoteFileName)){
     			remoteFileName = FilenameUtils.getName(localFile);
     		}
-    		remoteDirectory += "/" + remoteFileName;
+    		remoteDirectory += separator + remoteFileName;
     		
+    		entity = new AgentEntity(Constants.TYPE_FILE_UPLOAD);
+			entity.setServerFile(remoteDirectory);
+			
     		dis = new DataInputStream(socket.getInputStream());
 			output = new ObjectOutputStream(socket.getOutputStream());
-		 	entity = new AgentEntity(Constants.TYPE_FILE_UPLOAD);
-			entity.setFilePathRemote(remoteDirectory);
 		    output.writeObject(entity);
 		 	output.flush();
 		 	
 		 	//向目标服务端传送本地文件
             bis = new BufferedInputStream(new FileInputStream(file));
             dos = new DataOutputStream(socket.getOutputStream());
+            dos.writeUTF("文件名:"+ file.getName() +",文件大小:"+ file.length());
             
             boolean result = dis.readBoolean();
             if( !result ) {
@@ -203,22 +206,21 @@ public class SocketClient {
             }
             
             int len = -1;
-            dos.writeUTF("文件名:"+ file.getName() +",文件大小:"+ file.length());
-            byte[] buffer =new byte[1024*1024];
-            while((len=bis.read(buffer)) != -1){
+            byte[] buffer = new byte[BUFFER_SIZE];
+            while((len = bis.read(buffer)) != -1){
             	dos.write(buffer, 0, len);
+            	dos.flush();
             }
-            dos.flush();
             //通知server端输出完毕(必须)
             socket.shutdownOutput();
-            
-            if(!dis.readBoolean()){
+
+            if(!dis.readBoolean()) {
             	throw new RuntimeException(dis.readUTF());
             }
 		} catch(IOException ioe) {
 			throw new RuntimeException("上传文件["+file.getName()+"]到服务器["+ ip +"]异常,原因:"+ ioe.getMessage());
 		} finally {
-			CloseUtil.close(dos,bis,output);
+			CloseUtil.close(dos, bis, output);
 			closeSocket();
 		}
 	}
@@ -230,23 +232,24 @@ public class SocketClient {
 	public void copyLocalFileToRemote(InputStream is, String remoteFile) throws IOException{
 		AgentEntity entity = null;
 		DataOutputStream dos = null;
-		ObjectOutputStream outputS = null;
+		ObjectOutputStream output = null;
 		BufferedReader bufferedReader = null;
 		
     	try {
     		CreateConnection();
-			outputS = new ObjectOutputStream(socket.getOutputStream());
+    		output = new ObjectOutputStream(socket.getOutputStream());
+			
 			entity = new AgentEntity(Constants.TYPE_FILE_UPLOAD);
-			entity.setFilePathRemote(remoteFile);
-		    outputS.writeObject(entity);
-		 	outputS.flush();
+			entity.setServerFile(remoteFile);
+			output.writeObject(entity);
+			output.flush();
 		 	
 		 	//向目标服务端传送本地文件
-		 	int length =0;
-            byte[] sendBytes =new byte[102400];
-            dos =new DataOutputStream(socket.getOutputStream());
-            while((length = is.read(sendBytes,0, sendBytes.length)) >0){
-                dos.write(sendBytes,0, length);
+		 	int length = -1;
+            byte[] sendBytes = new byte[BUFFER_SIZE];
+            dos = new DataOutputStream(socket.getOutputStream());
+            while((length = is.read(sendBytes, 0, sendBytes.length)) >0){
+                dos.write(sendBytes, 0, length);
                 dos.flush();
             }
             socket.shutdownOutput();
@@ -261,7 +264,7 @@ public class SocketClient {
 		}catch(IOException ioe){
 			throw new RuntimeException("上传文件到服务器["+ ip +"]异常,原因:"+ioe.getMessage());
 		} finally {
-			IOUtils.closeQuietly(bufferedReader, dos, outputS);
+			IOUtils.closeQuietly(bufferedReader, dos, output);
 			closeSocket();
 		}
 	}
@@ -274,7 +277,7 @@ public class SocketClient {
 	public void copyRemoteFileToLocal(String remoteFile, String localFileDirectory) {
 		copyRemoteFileToLocal(remoteFile, localFileDirectory, null);
 	}
-	
+
 	/**
 	 * 远程服务器文件下载到本地可自定义文件名称
 	 * @param remoteFile 远程文件路径
@@ -285,32 +288,35 @@ public class SocketClient {
 		AgentEntity entity = null;
 		DataInputStream dis = null;
 		FileOutputStream fos = null;
-		ObjectOutputStream outputS = null;
-    	try {
+		ObjectOutputStream output = null;
+    	
+		try {
     		CreateConnection();
     		if(MyUtil.isEmpty(localFilename)){
     			localFilename = FilenameUtils.getName(remoteFile);
     		}
-    		localFileDirectory += "/"+localFilename;
-    		outputS = new ObjectOutputStream(socket.getOutputStream());
+    		localFileDirectory += separator + localFilename;
+
+    		output = new ObjectOutputStream(socket.getOutputStream());
     		entity = new AgentEntity(Constants.TYPE_FILE_DOWNLOAD);
-			entity.setFilePathRemote(remoteFile);
-		    outputS.writeObject(entity);
-    		outputS.flush();
+			entity.setServerFile(remoteFile);
+			output.writeObject(entity);
+			output.flush();
     		
     		dis = new DataInputStream(socket.getInputStream());
     		fos = new FileOutputStream(localFileDirectory);
-    		byte[] buffer = new byte[1024*1024];
-    		int len =-1;
+    		
+    		int len = -1;
+    		byte[] buffer = new byte[BUFFER_SIZE];
     		while((len=dis.read(buffer)) != -1){
     			fos.write(buffer, 0, len);
+    			fos.flush();
     		}
-    		fos.flush();
-    		
-		}catch(IOException ioe){
+
+		} catch (IOException ioe){
 			throw new RuntimeException("从服务器["+ ip +"]下载文件异常,原因:"+ioe.getMessage());
 		} finally {
-			CloseUtil.close(dis,fos,outputS);
+			CloseUtil.close(dis, fos, output);
 			closeSocket();
 		}
 	}

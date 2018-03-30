@@ -73,8 +73,8 @@ public class NettyServerHandler extends ChannelHandlerAdapter{
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)throws Exception {
 		if(ctx.channel().isOpen() && ctx.channel().isActive() ){
-			System.out.println("客户端["+ ctx.channel().remoteAddress()+"]连接已关闭>>>>");
 			ctx.close();
+			System.out.println("客户端["+ ctx.channel().remoteAddress()+"]连接已关闭>>>>");
 		}
 	}
 

@@ -12,7 +12,10 @@ import java.io.LineNumberReader;
 import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.Charset;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 
 import com.feicent.agent.SocketApplication;
@@ -28,15 +31,19 @@ import com.feicent.agent.util.MyUtil;
  */
 public class ServerThread implements Runnable {
 	private Socket client;
+	private String clientIp;
+	
 	private Logger logger = SocketApplication.logger;
+	private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
     
 	public ServerThread(Socket socket){
 		this.client = socket;
+		this.clientIp = client.getInetAddress().getHostAddress();
 	}
 
 	@Override
 	public void run() {
-		logger.info("["+client.getInetAddress()+ ":" + client.getPort()+"] come in");
+		logger.info("["+ clientIp + ":" + client.getPort()+"] come in");
 		ObjectInputStream objInStream = null;
 
 		try {
@@ -52,10 +59,10 @@ public class ServerThread implements Runnable {
 				handlerShell(entity.getShell());
 			} 
 			else if(type == Constants.TYPE_FILE_UPLOAD){
-				uploadFile(entity.getFilePathRemote());
+				uploadFile(entity.getServerFile());
 			} 
 			else if(type == Constants.TYPE_FILE_DOWNLOAD){
-				downloadFile(entity.getFilePathRemote());
+				downloadFile(entity.getServerFile());
 			}
 			
 		} catch (Exception e) {
@@ -96,8 +103,7 @@ public class ServerThread implements Runnable {
 		try {
 			out = new PrintWriter(client.getOutputStream(), true);
 
-			String[] cmd = new String[]{"/bin/sh", "-c", shell};
-			cmd = MyUtil.buildShell(shell);
+			String[] cmd = MyUtil.buildShell(shell);
 			builder = new ProcessBuilder(cmd);
 			builder.redirectErrorStream(true);
 			pos = builder.start();
@@ -135,10 +141,8 @@ public class ServerThread implements Runnable {
 			if(file.exists()){
 				file.delete();
 			}
-			File parent = file.getParentFile();
-			if(parent.isDirectory() && !parent.exists()){
-				parent.mkdirs();
-			}
+			FileUtils.deleteQuietly(file);
+			FileUtils.forceMkdir(file.getParentFile());
 			
 			fos = new FileOutputStream(file);
 			dis = new DataInputStream(client.getInputStream());
@@ -165,12 +169,32 @@ public class ServerThread implements Runnable {
 			CloseUtil.close(client);
 		}
 	}
-
+	
 	/**
 	 * 本地文件发送到socket客户端
 	 * @param localFile 本地文件
 	 */
 	private void downloadFile(String localFile){
+		try {
+			File file = new File(localFile);
+			if (!file.exists() || !file.isFile()) {
+				IOUtils.write(Constants.ERROR_MSG+ localFile +" is not exist", client.getOutputStream(), Charset.defaultCharset());
+				return;
+			}
+			
+			FileUtils.copyFile(file, client.getOutputStream());
+		} catch (Exception e) {
+			logger.error("Client <{}> download file <{}> Exception:", clientIp, localFile, e);
+		} finally {
+			CloseUtil.close(client);
+		}
+	}
+
+	/**
+	 * 本地文件发送到socket客户端
+	 * @param localFile 本地文件
+	 */
+	protected void downloadFile2(String localFile){
 		// 向客户端传送文件
 		FileInputStream fis = null;
 		BufferedInputStream bis = null;
@@ -183,14 +207,14 @@ public class ServerThread implements Runnable {
 			dos = new DataOutputStream(client.getOutputStream());
 
 			// 传输文件
-			byte[] sendBytes = new byte[1024*1024];
+			byte[] sendBytes = new byte[DEFAULT_BUFFER_SIZE];
 			int length = 0;
 			while((length=bis.read(sendBytes)) != -1){
 				dos.write(sendBytes, 0, length);
 				dos.flush();
 			}
 		} catch (Exception e) {
-			logger.error("DownloadFile Exception: localFile-->{}", localFile, e);
+			logger.error("Client <{}> download file <{}> Exception:", clientIp, localFile, e);
 		} finally {
 			CloseUtil.close(dos, bis, fis);
 			CloseUtil.close(client);
