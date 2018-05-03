@@ -10,17 +10,25 @@ import java.util.UUID;
  * 通用工具类
  */
 public class MyUtil {
-	
-	public static final String SHORT_DATE = "HH:mm:ss";
-	public static final String LONG_DATE = "yyyy-MM-dd HH:mm:ss";
-	
+
+	public static final String LONG_TIME  = "HH:mm:ss";
+	public static final String SHORT_DATE = "yyyy-MM-dd";
+	public static final String LONG_DATE  = "yyyy-MM-dd HH:mm:ss";
+
 	public static final SimpleDateFormat DF_LONG = new SimpleDateFormat(LONG_DATE);
-	public static final SimpleDateFormat DF_SHORT = new SimpleDateFormat(SHORT_DATE);
-	
+	public static final SimpleDateFormat DF_TIME = new SimpleDateFormat(LONG_TIME);
+
 	/**
 	 * @return 生成UUID字符串
 	 */
 	public static String uuid(){
+		return UUID.randomUUID().toString().replaceAll("-", "");
+	}
+
+	/**
+	 * @return 生成UUID字符串
+	 */
+	public static String UUID(){
 		return UUID.randomUUID().toString();
 	}
 	
@@ -47,8 +55,8 @@ public class MyUtil {
 	/**
 	 * 获取当前时间 HH:mm:ss
 	 */
-	public static String getNowShort(){
-		return DF_SHORT.format(new Date());
+	public static String getNowTime(){
+		return DF_TIME.format(new Date());
 	}
 	
 	public static boolean isEmpty(final CharSequence cs) {
@@ -73,15 +81,24 @@ public class MyUtil {
 	 * D:\eclipse\workspaces\socket-agent\
 	 */
 	public static String getUserDir() {
-		return System.getProperty("user.dir") + System.getProperty("file.separator");
+		return Constants.USER_DIR + Constants.FILE_SEPARATOR;
 	}
+
+	public static void checkKey(String key) {
+        if (key == null) {
+            throw new NullPointerException("key can't be null");
+        }
+        if (key.equals("")) {
+            throw new IllegalArgumentException("key can't be empty");
+        }
+    }
 
 	public static String[] buildShell(String command) {
 		if (isEmpty(command)) {
 			throw new NullPointerException();
 		}
 		String[] cmdarray;
-		String os = System.getProperty("os.name");
+		String os = Constants.OS_NAME;
 
 		if ("Windows 95".equals(os) || "Windows 98".equals(os) || "Windows ME".equals(os)){
 			cmdarray = new String[]{"command.exe", "/C", command};
@@ -93,7 +110,7 @@ public class MyUtil {
 		
 		return cmdarray;
 	}
-	
+
 	/**
 	 * 资源配置文件目录
 	 * /D:/eclipse/workspaces/socket-agent/target/classes/
@@ -101,7 +118,7 @@ public class MyUtil {
 	public static String getResourcePath() {
 		return MyUtil.class.getClass().getResource("/").getPath();
 	}
-	
+
 	public static String getLocalServerIp() {
 		String serverIp;
 		try {
@@ -112,5 +129,5 @@ public class MyUtil {
 		}
 		return serverIp;
 	}
-    
+
 }

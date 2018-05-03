@@ -89,7 +89,7 @@ public class ServerThread implements Runnable {
 			CloseUtil.close(client);
 		}
 	}
-	
+
 	/**
 	 * 执行后返回结果信息
 	 * @param shell
